@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="assets/logo.png" type="image/x-icon">
+    <title>Sector Z: Outbreak</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="mainMenu">
+        <div class="menu-header">
+             <img src="assets/logo.png" alt="Sector Z Logo" id="menuLogo">
+             <h1>Sector Z: Outbreak</h1>
+        </div>
+        <button id="startGameButton">Start Game</button>
+        <button id="settingsButton">Settings</button>
+    </div>
+
+    <div id="settingsMenu" class="hidden">
+        <h2>Settings</h2>
+        <div class="settings-option">
+            <label for="toggleMusic">Music:</label>
+            <button id="toggleMusicButton">ON</button>
+        </div>
+        <div class="settings-option">
+            <label for="toggleBlood">Blood Effects:</label>
+            <button id="toggleBloodButton">ON</button>
+        </div>
+        <div class="settings-option">
+            <label for="toggleShake">Screen Shake:</label>
+            <button id="toggleShakeButton">ON</button>
+        </div>
+         <div class="settings-option">
+            <label for="toggleFullscreen">Fullscreen:</label>
+            <button id="toggleFullscreenButton">OFF</button>
+        </div>
+        <div class="settings-option">
+            <label for="volumeSlider">Sound Effects Volume:</label>
+            <span id="volumeValue">60</span>%
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.6">
+        </div>
+        <button id="backButton">Back</button>
+    </div>
+
+
+    <div id="ui" class="hidden">
+        <div>Score: <span id="score">0</span></div>
+        <div>Wave: <span id="wave">1</span></div>
+        <div>Level: <span id="level">1</span> (<span id="xp">0</span> / <span id="xpNext">100</span>)</div>
+        <div>Health: <span id="health">100</span></div>
+        <div>Ammo: <span id="ammo">30</span> / <span id="maxAmmo">30</span></div>
+        <div id="waveMessage" class="hidden"></div>
+    </div>
+    <div id="shop" class="hidden">
+        <h2>Shop (Wave Complete!)</h2>
+        <button id="buyAmmo">Buy Ammo (10 Score)</button>
+        <button id="buyHealth">Buy Health (20 Score)</button>
+        <button id="upgradeWeapon">Upgrade Weapon (50 Score)</button>
+        <button id="nextWave">Start Next Wave</button>
+    </div>
+    <div id="levelUpScreen" class="hidden">
+        <h2>Level Up! Choose a Power-Up:</h2>
+        <div id="cardChoices">
+
+        </div>
+    </div>
+    <div id="gameOver" class="hidden">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button id="restartGame">Restart</button>
+    </div>
+    <canvas id="gameCanvas" class="hidden"></canvas>
+    <div id="healthOverlay"></div> <!-- Added health overlay -->
+    <script src="script.js"></script>
+</body>
+</html>

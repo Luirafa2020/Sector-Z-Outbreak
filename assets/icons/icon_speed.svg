@@ -1,0 +1,15 @@
+﻿<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <!-- Boot -->
+  <rect x="3" y="6" width="9" height="8" fill="#A0522D"/> <!-- Main boot -->
+  <rect x="4" y="13" width="7" height="1" fill="#8B4513"/> <!-- Sole -->
+  <rect x="3" y="6" width="1" height="8" fill="#8B4513"/> <!-- Left edge -->
+  <rect x="11" y="6" width="1" height="7" fill="#8B4513"/> <!-- Right edge back -->
+  <rect x="9" y="6" width="3" height="1" fill="#8B4513"/> <!-- Top edge -->
+  <rect x="8" y="7" width="1" height="1" fill="#A0522D"/> <!-- Top curve inner -->
+   <rect x="6" y="6" width="1" height="1" fill="#CD853F"/> <!-- Highlight -->
+   <rect x="4" y="7" width="1" height="1" fill="#CD853F"/>
+  <!-- Motion lines -->
+  <rect x="0" y="9" width="2" height="1" fill="#ADD8E6"/>
+  <rect x="1" y="11" width="2" height="1" fill="#ADD8E6"/>
+</svg>

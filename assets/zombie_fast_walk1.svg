@@ -1,0 +1,19 @@
+﻿<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <!-- Head -->
+  <rect x="5" y="4" width="6" height="6" fill="#D7CCC8"/>
+  <rect x="5" y="3" width="6" height="1" fill="#A1887F"/>
+  <rect x="4" y="5" width="1" height="4" fill="#A1887F"/>
+  <rect x="11" y="5" width="1" height="4" fill="#A1887F"/>
+  <rect x="5" y="9" width="6" height="1" fill="#A1887F"/>
+  <rect x="7" y="6" width="1" height="1" fill="#BCAAA4"/>
+  <rect x="9" y="7" width="1" height="1" fill="#BCAAA4"/>
+  <!-- Arms -->
+  <rect x="2" y="5" width="2" height="4" fill="#BCAAA4"/>
+  <rect x="12" y="7" width="2" height="4" fill="#BCAAA4"/>
+  <!-- Waist -->
+  <rect x="4" y="10" width="8" height="1" fill="#A1887F"/>
+  <!-- Feet Only -->
+  <rect x="4" y="12" width="2" height="3" fill="#4E342E"/> <!-- Left Foot Forward -->
+  <rect x="10" y="11" width="2" height="2" fill="#4E342E"/> <!-- Right Foot Back/Up -->
+</svg>

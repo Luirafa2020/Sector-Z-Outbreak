@@ -1,0 +1,14 @@
+﻿<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <rect x="6" y="5" width="4" height="4" fill="#795548"/>
+  <rect x="6" y="4" width="4" height="1" fill="#4E342E"/>
+  <rect x="5" y="5" width="1" height="3" fill="#4E342E"/>
+  <rect x="10" y="5" width="1" height="3" fill="#4E342E"/>
+  <rect x="6" y="8" width="4" height="1" fill="#4E342E"/>
+  <rect x="2" y="7" width="12" height="4" fill="#4E342E"/>
+  <rect x="4" y="6" width="8" height="1" fill="#3E2723"/>
+  <rect x="0" y="7" width="3" height="4" fill="#6D4C41"/>
+  <rect x="13" y="7" width="3" height="4" fill="#6D4C41"/>
+   <rect x="4" y="12" width="3" height="3" fill="#3E2723"/>
+   <rect x="9" y="12" width="3" height="3" fill="#3E2723"/>
+</svg>

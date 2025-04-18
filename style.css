@@ -1,0 +1,379 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(to bottom, #222, #111);
+    overflow: hidden;
+    font-family: 'Press Start 2P', cursive;
+    color: #eee;
+    cursor: url('./assets/cursor.png'), auto;
+}
+
+canvas {
+    border: 2px solid #666;
+    display: block;
+    background-image: url('./assets/floor_tile.svg');
+    background-repeat: repeat;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 1;
+    cursor: url('./assets/cursor.png'), auto;
+}
+
+#healthOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 0, 0, 0); /* Start transparent red */
+    z-index: 10; /* Above canvas, below UI */
+    pointer-events: none; /* Doesn't block clicks */
+    transition: background-color 0.3s ease-out; /* Smooth transition */
+}
+
+
+#ui {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    font-size: 0.8em;
+    line-height: 1.7;
+    text-shadow: 1px 1px 2px #000;
+    z-index: 50;
+    pointer-events: none;
+    color: #fff;
+    min-width: 180px;
+}
+
+#ui div { margin-bottom: 8px; }
+.hidden { display: none !important; }
+
+
+#mainMenu, #settingsMenu, #shop, #gameOver, #waveMessage, #levelUpScreen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(20, 20, 20, 0.9);
+    color: #eee;
+    padding: 30px 40px;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid #aaa;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    min-width: 350px;
+    pointer-events: auto;
+}
+
+#mainMenu {
+    min-width: 450px;
+    padding: 40px;
+}
+#settingsMenu {
+     min-width: 400px;
+     max-width: 500px;
+}
+
+.menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 35px;
+}
+
+#menuLogo {
+    width: 64px;
+    height: 64px;
+    margin-right: 20px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+#mainMenu h1 {
+    margin: 0;
+    font-size: 1.8em;
+    color: #FFC107;
+    text-shadow: 2px 2px 3px black;
+}
+
+
+#settingsMenu h2, #shop h2, #gameOver h2, #waveMessage, #levelUpScreen h2 {
+     margin-top: 0;
+     margin-bottom: 30px;
+     color: #FFD700;
+     text-shadow: 2px 2px 3px black;
+     font-size: 1.4em;
+}
+#waveMessage { font-size: 1.5em; padding: 20px; background-color: rgba(0, 0, 0, 0.70); margin-left: 610px; margin-top: -50px;}
+#gameOver p { font-size: 1.1em; margin-bottom: 25px; }
+
+.settings-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid #444;
+}
+.settings-option:last-of-type {
+    border-bottom: none;
+    margin-bottom: 30px; /* Space before back button */
+}
+
+.settings-option label {
+    flex-basis: 50%;
+    text-align: left;
+    font-size: 0.9em;
+}
+.settings-option button,
+.settings-option input[type="range"],
+.settings-option span {
+    flex-basis: 45%;
+}
+
+.settings-option button { /* Style for toggle buttons */
+    padding: 8px 12px;
+    font-size: 0.8em;
+    min-width: 70px;
+    text-align: center;
+}
+.settings-option button.on {
+    background-color: #4CAF50; /* Green */
+    color: white;
+}
+.settings-option button.off {
+    background-color: #f44336; /* Red */
+    color: white;
+}
+
+.settings-option input[type="range"] {
+    width: 100%; /* Full width within its flex basis */
+    cursor: url('./assets/select.png'), pointer;
+    height: 8px;
+    background: #555;
+    border-radius: 5px;
+    appearance: none;
+    outline: none;
+    margin-left: 10px; /* Space after volume percentage */
+}
+.settings-option input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #ccc;
+    border-radius: 50%;
+    cursor: url('./assets/select.png'), pointer;
+}
+.settings-option input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #ccc;
+    border-radius: 50%;
+    cursor: url('./assets/select.png'), pointer;
+    border: none;
+}
+.settings-option span { /* Volume percentage */
+    font-size: 0.9em;
+    min-width: 45px; /* Ensure space for "100%" */
+    text-align: right;
+}
+
+#settingsMenu #backButton { /* Specific style for back button */
+    width: auto;
+    padding: 10px 25px;
+    margin-top: 15px;
+    display: inline-block;
+}
+
+
+#mainMenu button, #settingsMenu button, #shop button, #gameOver button, #levelUpScreen #resumeGameButton {
+    /* Shared button styles */
+    display: inline-block; /* Changed from block for some buttons */
+    padding: 12px 15px;
+    margin-bottom: 12px;
+    font-size: 0.9em;
+    font-family: 'Press Start 2P', cursive;
+    background-color: #555;
+    color: #eee;
+    border: 1px solid #999;
+    border-radius: 5px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-shadow: 1px 1px 1px black;
+    pointer-events: auto;
+    transform-origin: center center;
+    cursor: url('./assets/select.png'), pointer; /* Default cursor for buttons */
+}
+#mainMenu button { /* Specific styles for main menu buttons */
+    display: block;
+    width: 100%;
+    font-size: 1.1em;
+    padding: 15px 20px;
+    background-color: #607D8B;
+    margin-bottom: 15px; /* Spacing between main menu buttons */
+}
+
+#shop button, #gameOver button, #levelUpScreen #resumeGameButton {
+    display: block; /* Ensure these take full width */
+    width: 100%;
+}
+
+
+#mainMenu button:last-child, #shop button:last-child, #gameOver button:last-child { margin-bottom: 0; }
+
+
+#mainMenu button:hover:not(:disabled),
+#settingsMenu button:hover:not(:disabled),
+#shop button:hover:not(:disabled),
+#gameOver button:hover:not(:disabled),
+#levelUpScreen #resumeGameButton:hover:not(:disabled) {
+    /* Shared hover */
+    background-color: #777;
+    transform: scale(1.02);
+    /* cursor already set */
+}
+#mainMenu button:hover:not(:disabled) {
+    background-color: #78909C;
+}
+.settings-option button.on:hover { background-color: #66BB6A; } /* Lighter Green */
+.settings-option button.off:hover { background-color: #EF5350; } /* Lighter Red */
+#settingsMenu #backButton:hover:not(:disabled) { background-color: #666; }
+
+
+#mainMenu button:active:not(:disabled),
+#settingsMenu button:active:not(:disabled),
+#shop button:active:not(:disabled),
+#gameOver button:active:not(:disabled),
+#levelUpScreen #resumeGameButton:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+
+#shop button:disabled,
+#gameOver button:disabled,
+#levelUpScreen #resumeGameButton:disabled {
+    background-color: #444;
+    color: #888;
+    cursor: url('./assets/blocked.png'), not-allowed;
+    opacity: 0.7;
+}
+
+
+
+#levelUpScreen {
+    min-width: 500px;
+    padding: 25px;
+}
+
+#levelUpScreen h2 {
+    font-size: 1.6em;
+    color: #AB47BC;
+}
+
+#cardChoices {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.card-choice {
+    background-image: url('./assets/card_template.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border: none;
+    background-color: transparent;
+
+    width: 130px;
+    height: 182px;
+    padding: 10px 13px 10px 13px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    font-family: 'Press Start 2P', cursive;
+    color: #4A148C;
+    cursor: url('./assets/select.png'), pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+    font-size: 0.7em;
+    line-height: 1.4;
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+
+.card-choice:hover {
+    transform: translateY(-5px) scale(1.03);
+    filter: brightness(1.1);
+    box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.6);
+}
+
+
+.card-icon-container {
+    width: 80%;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+    background-color: transparent;
+    border: none;
+    flex-shrink: 0;
+    padding-top: 5px;
+    box-sizing: border-box;
+}
+
+
+.card-icon-svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+
+.card-choice .card-name {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #4A148C;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    display: block;
+    flex-shrink: 0;
+}
+
+.card-choice .card-description {
+    font-size: 0.75em;
+    color: #6A1B9A;
+    flex-grow: 1;
+    padding: 0 2px;
+    line-height: 1.4;
+}
+
+#levelUpScreen #resumeGameButton {
+    display: inline-block;
+    width: auto;
+    padding: 10px 20px;
+    margin-top: 20px;
+    font-size: 0.9em;
+}
