@@ -309,7 +309,7 @@ function playLevelUpSound() { playSound(levelUpSound); }
 function playSelectSound() { playSound(selectSound); }
 
 
-const WEAPONS = { "M4A1": { damage: 13, ammoCapacity: 30, fireRate: 11, reloadTime: 100, bulletImgSrc: './assets/bullet.svg', bulletWidth: 4, bulletHeight: 6, cost: 0, bulletGlowColor: 'rgba(255, 235, 59, 0.6)', bulletGlowBlur: 6 }, "Shotgun": { damage: 9, ammoCapacity: 8, fireRate: 45, reloadTime: 95, pellets: 6, spread: 0.35, bulletImgSrc: './assets/bullet.svg', bulletWidth: 4, bulletHeight: 6, cost: 150, bulletGlowColor: 'rgba(255, 160, 0, 0.6)', bulletGlowBlur: 5 } };
+const WEAPONS = { "M4A1": { damage: 13, ammoCapacity: 30, fireRate: 11, reloadTime: 250, bulletImgSrc: './assets/bullet.svg', bulletWidth: 4, bulletHeight: 6, cost: 0, bulletGlowColor: 'rgba(255, 235, 59, 0.6)', bulletGlowBlur: 6 }, "Shotgun": { damage: 9, ammoCapacity: 8, fireRate: 45, reloadTime: 95, pellets: 6, spread: 0.35, bulletImgSrc: './assets/bullet.svg', bulletWidth: 4, bulletHeight: 6, cost: 150, bulletGlowColor: 'rgba(255, 160, 0, 0.6)', bulletGlowBlur: 5 } };
 let currentWeaponName = STARTING_WEAPON_NAME; let weaponStats = { ...WEAPONS[currentWeaponName] }; weaponStats.currentAmmo = weaponStats.ammoCapacity; const bulletImg = new Image(); bulletImg.src = weaponStats.bulletImgSrc;
 
 
