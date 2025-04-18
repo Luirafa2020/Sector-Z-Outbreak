@@ -23,3 +23,5 @@ Esse é um jogo de matar zumbis e sobreviver o máximo de ondas que você conseg
 ![image](https://github.com/user-attachments/assets/fb7a86f3-f860-4993-a20e-2f9de4063b6a)
 
 Link do jogo: https://luirafa2020.github.io/Sector-Z-Outbreak/
+
+---------Feito com a ajuda do Gemini 2.5 Pro---------
