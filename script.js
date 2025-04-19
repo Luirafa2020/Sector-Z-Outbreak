@@ -64,6 +64,15 @@ const HEALTH_PULSE_FREQUENCY = 0.11;
 const HEALTH_PULSE_MAGNITUDE_FACTOR = 0.15;
 const HEARTBEAT_MAX_VOLUME_MULTIPLIER = 10; // Heartbeat can get louder than normal SFX
 const HEARTBEAT_VOLUME_POWER = 2; // Increase volume faster near death (1=linear, 2=squared)
+const ZOMBIE_HEALTH_SCALE_PER_WAVE_NORMAL = 12; // Increased from 6
+const ZOMBIE_HEALTH_SCALE_PER_WAVE_TANK = 20; // Increased from 10
+const AMMO_COST_BASE = 10;
+const AMMO_COST_SCALE_PER_WAVE = 2;
+const HEALTH_COST_BASE = 20;
+const HEALTH_COST_SCALE_PER_WAVE = 3;
+const UPGRADE_COST_BASE = 50;
+const UPGRADE_COST_SCALE_PER_WAVE = 25; // Increased from 5
+
 
 let player;
 let zombies = [];
@@ -197,17 +206,11 @@ function updateHeartbeatSound() {
     const healthPercent = player.health / player.maxHealth;
 
     if (healthPercent <= LOW_HEALTH_THRESHOLD && player.health > 0 && gameState !== 'menu' && gameState !== 'settings') {
-        // Calculate how far into the low health range the player is (0 at threshold, 1 at 0 health)
         const lowHealthIntensity = Math.max(0, 1 - (healthPercent / LOW_HEALTH_THRESHOLD));
-
-        // Apply a power curve to make the volume increase faster near death
         const volumeFactor = Math.pow(lowHealthIntensity, HEARTBEAT_VOLUME_POWER);
-
-        // Calculate target volume, potentially exceeding general SFX volume, but capped at 1.0
         const targetVolume = (gameSoundVolume * HEARTBEAT_MAX_VOLUME_MULTIPLIER) * volumeFactor;
-        heartbeatSound.volume = Math.max(0, Math.min(1.0, targetVolume)); // Clamp between 0 and 1
+        heartbeatSound.volume = Math.max(0, Math.min(1.0, targetVolume));
 
-        // Play/resume logic
         if (heartbeatSound.paused && !heartbeatPlaying) {
             heartbeatPlaying = true;
             const playPromise = heartbeatSound.play();
@@ -235,7 +238,6 @@ function updateHeartbeatSound() {
         }
 
     } else {
-        // Stop sound if health is above threshold or player is dead/in menu
         if (!heartbeatSound.paused) {
             heartbeatSound.pause();
              heartbeatSound.currentTime = 0;
@@ -285,7 +287,6 @@ function setGameSoundVolume(volume) {
 
     if (volumeValue) volumeValue.textContent = Math.round(gameSoundVolume * 100);
     localStorage.setItem('gameSoundVolume', gameSoundVolume);
-    // Re-evaluate heartbeat volume immediately when SFX volume changes
     updateHeartbeatSound();
 }
 
@@ -338,14 +339,76 @@ const AVAILABLE_BUFFS = [
     { id: 'damage_1', name: 'Sharp Shooter', description: '+8% Damage', icon: './assets/icons/icon_damage.svg', maxLevel: 5, currentLevel: 0, apply: (p, ws) => { ws.damage = Math.round(ws.damage * 1.08); } },
     { id: 'fire_rate_1', name: 'Rapid Fire', description: '-8% Fire Cooldown', icon: './assets/icons/icon_firerate.svg', maxLevel: 5, currentLevel: 0, apply: (p, ws) => { ws.fireRate = Math.max(3, Math.floor(ws.fireRate * 0.92)); } },
     { id: 'ammo_capacity_1', name: 'Extra Pouches', description: '+15% Ammo Capacity', icon: './assets/icons/icon_ammo.svg', maxLevel: 5, currentLevel: 0, apply: (p, ws) => { ws.ammoCapacity = Math.ceil(ws.ammoCapacity * 1.15); ws.currentAmmo = Math.min(ws.ammoCapacity, ws.currentAmmo + Math.ceil(ws.ammoCapacity * 0.15)) } },
-    { id: 'health_regen_1', name: 'Regeneration', description: '+0.1 HP/sec', icon: './assets/icons/icon_regen.svg', maxLevel: 3, currentLevel: 0, apply: (p, ws) => { p.healthRegen = (p.healthRegen || 0) + 0.1; } },
+    { id: 'health_regen_1', name: 'Regeneration', description: '+1 HP/sec', icon: './assets/icons/icon_regen.svg', maxLevel: 3, currentLevel: 0, apply: (p, ws) => { p.healthRegen = (p.healthRegen || 0) + 1; } },
 ];
 
 class Entity { constructor(x, y, width, height, health) { this.x = x; this.y = y; this.width = width; this.height = height; this.health = health; this.maxHealth = health; this.angle = 0; this.isMoving = false; this.walkFrame = 0; this.walkAnimTimer = 0; this.imgIdle = null; this.imgWalk1 = null; this.imgWalk2 = null;} collidesWith(other) { return this.x < other.x + other.width && this.x + this.width > other.x && this.y < other.y + other.height && this.y + this.height > other.y; } getCenterX() { return this.x + this.width / 2; } getCenterY() { return this.y + this.height / 2; } updateAnimation(didMove) { this.isMoving = didMove; if (this.isMoving) { this.walkAnimTimer++; if (this.walkAnimTimer >= WALK_ANIMATION_SPEED) { this.walkFrame = (this.walkFrame + 1) % 2; this.walkAnimTimer = 0; } } else { this.walkAnimTimer = 0;} } drawSelf() { let imageToDraw = this.imgIdle; if (this.isMoving) { imageToDraw = this.walkFrame === 0 ? this.imgWalk1 : this.imgWalk2; } ctx.save(); ctx.translate(this.getCenterX(), this.getCenterY()); ctx.rotate(this.angle + Math.PI / 2); if(imageToDraw) { ctx.drawImage(imageToDraw, -this.width / 2, -this.height / 2, this.width, this.height); } ctx.restore(); } }
 
 class Player extends Entity { constructor(x, y) { super(x, y, 16, 16, PLAYER_HEALTH_START); this.speed = PLAYER_SPEED; this.healthRegen = 0; this.regenTimer = 0; this.imgIdle = playerImgIdle; this.imgWalk1 = playerImgWalk1; this.imgWalk2 = playerImgWalk2; } update() { let dx = 0, dy = 0; if (keys['w'] || keys['arrowup']) dy -= 1; if (keys['s'] || keys['arrowdown']) dy += 1; if (keys['a'] || keys['arrowleft']) dx -= 1; if (keys['d'] || keys['arrowright']) dx += 1; const mag = Math.sqrt(dx * dx + dy * dy); let moved = false; if (mag > 0) { const moveSpeed = this.speed; dx = (dx / mag) * moveSpeed; dy = (dy / mag) * moveSpeed; this.x += dx; this.y += dy; moved = true; } this.updateAnimation(moved); this.x = Math.max(0, Math.min(canvas.width - this.width, this.x)); this.y = Math.max(0, Math.min(canvas.height - this.height, this.y)); this.angle = Math.atan2(mousePos.y - this.getCenterY(), mousePos.x - this.getCenterX()); if (shootCooldown > 0) shootCooldown--; if (isReloading) { reloadTimer--; if (reloadTimer <= 0) { weaponStats.currentAmmo = weaponStats.ammoCapacity; isReloading = false; updateUI(); } } if (isShooting && shootCooldown <= 0 && !isReloading && weaponStats.currentAmmo > 0 && gameState === 'playing') { this.shoot(); shootCooldown = weaponStats.fireRate; weaponStats.currentAmmo--; updateUI(); if (weaponStats.currentAmmo === 0) startReload(); } if (this.healthRegen > 0) { this.regenTimer++; if (this.regenTimer >= 60) { this.health = Math.min(this.maxHealth, this.health + this.healthRegen); this.regenTimer = 0; updateUI(); } } } shoot() { playShotSound(); const muzzleX = this.getCenterX() + Math.cos(this.angle) * (this.width * 0.7); const muzzleY = this.getCenterY() + Math.sin(this.angle) * (this.height * 0.7); createParticles(muzzleX, muzzleY, 7, 'muzzleFlash'); triggerScreenShake(1, 3); const currentWeapon = WEAPONS[currentWeaponName]; if (currentWeapon.pellets) { for (let i = 0; i < currentWeapon.pellets; i++) { const angleOffset = (Math.random() - 0.5) * currentWeapon.spread; bullets.push(new Bullet(muzzleX, muzzleY, this.angle + angleOffset, weaponStats.damage, weaponStats)); } } else { const angleOffset = (currentWeapon.spread ? (Math.random() - 0.5) * currentWeapon.spread : 0); bullets.push(new Bullet(muzzleX, muzzleY, this.angle + angleOffset, weaponStats.damage, weaponStats)); } } takeDamage(amount) { this.health -= amount; updateUI(); triggerScreenShake(6, 18); if (this.health <= 0) gameOver(); createParticles(this.getCenterX(), this.getCenterY(), 12, 'blood'); } draw() { this.drawSelf(); } }
 
-class Zombie extends Entity { constructor(x, y, type = 'normal') { let health, speed, damage, scoreValue, xpValue, attackCooldown; let imgIdle, imgWalk1, imgWalk2; const size = 16; switch(type) { case 'fast': health = ZOMBIE_HEALTH_FAST; speed = ZOMBIE_SPEED_FAST; damage = 8; imgIdle = zombieFastImgIdle; imgWalk1 = zombieFastImgWalk1; imgWalk2 = zombieFastImgWalk2; scoreValue = 15; xpValue = ZOMBIE_BASE_XP * 1.2; attackCooldown = 45; break; case 'tank': health = ZOMBIE_HEALTH_TANK; speed = ZOMBIE_SPEED_TANK; damage = 15; imgIdle = zombieTankImgIdle; imgWalk1 = zombieTankImgWalk1; imgWalk2 = zombieTankImgWalk2; scoreValue = 25; xpValue = ZOMBIE_BASE_XP * 2; attackCooldown = 80; break; case 'normal': default: health = ZOMBIE_HEALTH_NORMAL; speed = ZOMBIE_SPEED_NORMAL; damage = 7; imgIdle = zombieNormalImgIdle; imgWalk1 = zombieNormalImgWalk1; imgWalk2 = zombieNormalImgWalk2; scoreValue = 10; xpValue = ZOMBIE_BASE_XP; attackCooldown = 65; break; } super(x, y, size, size, health + (currentWave - 1) * (type === 'tank' ? 10 : 6)); this.type = type; this.speed = speed * (1 + Math.random() * 0.1); this.damage = damage; this.attackCooldown = attackCooldown; this.currentAttackCooldown = Math.random() * this.attackCooldown; this.scoreValue = scoreValue; this.xpValue = Math.round(xpValue); this.pushForce = 0.2; this.imgIdle = imgIdle; this.imgWalk1 = imgWalk1; this.imgWalk2 = imgWalk2;} update() { if (!player || gameState !== 'playing') return; const prevX = this.x; const prevY = this.y; const dx = player.getCenterX() - this.getCenterX(); const dy = player.getCenterY() - this.getCenterY(); this.angle = Math.atan2(dy, dx); const magnitude = Math.sqrt(dx * dx + dy * dy); zombies.forEach(otherZombie => { if (this !== otherZombie && this.collidesWith(otherZombie)) { const pushAngle = Math.atan2(this.getCenterY() - otherZombie.getCenterY(), this.getCenterX() - otherZombie.getCenterX()); this.x += Math.cos(pushAngle) * this.pushForce; this.y += Math.sin(pushAngle) * this.pushForce;} }); const attackRange = this.width / 2 + player.width / 2 + 2; if (magnitude > attackRange) { this.x += Math.cos(this.angle) * this.speed; this.y += Math.sin(this.angle) * this.speed; } else { if (this.currentAttackCooldown <= 0) { player.takeDamage(this.damage); playBiteSound(); this.currentAttackCooldown = this.attackCooldown; createParticles(player.getCenterX(), player.getCenterY(), 4, 'blood'); } } if(this.currentAttackCooldown > 0) this.currentAttackCooldown--; this.x = Math.max(-this.width * 2, Math.min(canvas.width + this.width * 2, this.x)); this.y = Math.max(-this.height * 2, Math.min(canvas.height + this.height * 2, this.y)); const moved = this.x !== prevX || this.y !== prevY; this.updateAnimation(moved);} takeDamage(amount) { this.health -= amount; createParticles(this.getCenterX(), this.getCenterY(), this.type === 'tank' ? 2 : 4, 'blood'); if (this.health <= 0) this.die(); } die() { playExplosionSound(); const deathX = this.getCenterX(); const deathY = this.getCenterY(); const index = zombies.indexOf(this); if (index > -1) zombies.splice(index, 1); score += this.scoreValue; gainExperience(this.xpValue); updateUI(); const particleCount = this.type === 'tank' ? 75 : 55; createParticles(deathX, deathY, particleCount, 'zombieDeath'); triggerScreenShake(this.type === 'tank' ? 5 : 3, this.type === 'tank' ? 12 : 10); addBloodDecal(deathX, deathY); if (zombies.length === 0 && gameState === 'playing') startWaveTransition(); } draw() { this.drawSelf(); const barWidth = this.width * 0.9; const barHeight = 4; const barX = this.getCenterX() - barWidth / 2; const barY = this.y - 12; const healthPercent = Math.max(0, this.health / this.maxHealth); ctx.fillStyle = 'rgba(80, 0, 0, 0.7)'; ctx.fillRect(barX, barY, barWidth, barHeight); ctx.fillStyle = `rgba(0, 220, 0, ${0.5 + healthPercent * 0.5})`; ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight); ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 0.5; ctx.strokeRect(barX, barY, barWidth, barHeight); } }
+class Zombie extends Entity {
+    constructor(x, y, type = 'normal') {
+        let baseHealth, speed, damage, scoreValue, xpValue, attackCooldown;
+        let imgIdle, imgWalk1, imgWalk2;
+        const size = 16;
+
+        switch(type) {
+            case 'fast':
+                baseHealth = ZOMBIE_HEALTH_FAST;
+                speed = ZOMBIE_SPEED_FAST;
+                damage = 8;
+                imgIdle = zombieFastImgIdle;
+                imgWalk1 = zombieFastImgWalk1;
+                imgWalk2 = zombieFastImgWalk2;
+                scoreValue = 15;
+                xpValue = ZOMBIE_BASE_XP * 1.2;
+                attackCooldown = 45;
+                break;
+            case 'tank':
+                baseHealth = ZOMBIE_HEALTH_TANK;
+                speed = ZOMBIE_SPEED_TANK;
+                damage = 15;
+                imgIdle = zombieTankImgIdle;
+                imgWalk1 = zombieTankImgWalk1;
+                imgWalk2 = zombieTankImgWalk2;
+                scoreValue = 25;
+                xpValue = ZOMBIE_BASE_XP * 2;
+                attackCooldown = 80;
+                break;
+            case 'normal':
+            default:
+                baseHealth = ZOMBIE_HEALTH_NORMAL;
+                speed = ZOMBIE_SPEED_NORMAL;
+                damage = 7;
+                imgIdle = zombieNormalImgIdle;
+                imgWalk1 = zombieNormalImgWalk1;
+                imgWalk2 = zombieNormalImgWalk2;
+                scoreValue = 10;
+                xpValue = ZOMBIE_BASE_XP;
+                attackCooldown = 65;
+                break;
+        }
+        const healthPerWaveBonus = (type === 'tank' ? ZOMBIE_HEALTH_SCALE_PER_WAVE_TANK : ZOMBIE_HEALTH_SCALE_PER_WAVE_NORMAL);
+        const finalHealth = Math.round(baseHealth + (currentWave - 1) * healthPerWaveBonus * (1 + (currentWave-1)*0.05)); // Slightly exponential increase
+
+        super(x, y, size, size, finalHealth);
+        this.type = type;
+        this.speed = speed * (1 + Math.random() * 0.1); // Keep speed random variation
+        this.damage = damage;
+        this.attackCooldown = attackCooldown;
+        this.currentAttackCooldown = Math.random() * this.attackCooldown;
+        this.scoreValue = scoreValue;
+        this.xpValue = Math.round(xpValue);
+        this.pushForce = 0.2;
+        this.imgIdle = imgIdle;
+        this.imgWalk1 = imgWalk1;
+        this.imgWalk2 = imgWalk2;
+    }
+    update() { if (!player || gameState !== 'playing') return; const prevX = this.x; const prevY = this.y; const dx = player.getCenterX() - this.getCenterX(); const dy = player.getCenterY() - this.getCenterY(); this.angle = Math.atan2(dy, dx); const magnitude = Math.sqrt(dx * dx + dy * dy); zombies.forEach(otherZombie => { if (this !== otherZombie && this.collidesWith(otherZombie)) { const pushAngle = Math.atan2(this.getCenterY() - otherZombie.getCenterY(), this.getCenterX() - otherZombie.getCenterX()); this.x += Math.cos(pushAngle) * this.pushForce; this.y += Math.sin(pushAngle) * this.pushForce;} }); const attackRange = this.width / 2 + player.width / 2 + 2; if (magnitude > attackRange) { this.x += Math.cos(this.angle) * this.speed; this.y += Math.sin(this.angle) * this.speed; } else { if (this.currentAttackCooldown <= 0) { player.takeDamage(this.damage); playBiteSound(); this.currentAttackCooldown = this.attackCooldown; createParticles(player.getCenterX(), player.getCenterY(), 4, 'blood'); } } if(this.currentAttackCooldown > 0) this.currentAttackCooldown--; this.x = Math.max(-this.width * 2, Math.min(canvas.width + this.width * 2, this.x)); this.y = Math.max(-this.height * 2, Math.min(canvas.height + this.height * 2, this.y)); const moved = this.x !== prevX || this.y !== prevY; this.updateAnimation(moved);}
+    takeDamage(amount) { this.health -= amount; createParticles(this.getCenterX(), this.getCenterY(), this.type === 'tank' ? 2 : 4, 'blood'); if (this.health <= 0) this.die(); }
+    die() { playExplosionSound(); const deathX = this.getCenterX(); const deathY = this.getCenterY(); const index = zombies.indexOf(this); if (index > -1) zombies.splice(index, 1); score += this.scoreValue; gainExperience(this.xpValue); updateUI(); const particleCount = this.type === 'tank' ? 75 : 55; createParticles(deathX, deathY, particleCount, 'zombieDeath'); triggerScreenShake(this.type === 'tank' ? 5 : 3, this.type === 'tank' ? 12 : 10); addBloodDecal(deathX, deathY); if (zombies.length === 0 && gameState === 'playing') startWaveTransition(); }
+    draw() { this.drawSelf(); const barWidth = this.width * 0.9; const barHeight = 4; const barX = this.getCenterX() - barWidth / 2; const barY = this.y - 12; const healthPercent = Math.max(0, this.health / this.maxHealth); ctx.fillStyle = 'rgba(80, 0, 0, 0.7)'; ctx.fillRect(barX, barY, barWidth, barHeight); ctx.fillStyle = `rgba(0, 220, 0, ${0.5 + healthPercent * 0.5})`; ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight); ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 0.5; ctx.strokeRect(barX, barY, barWidth, barHeight); }
+}
 
 class Bullet { constructor(x, y, angle, damage, weaponUsed) { this.x = x; this.y = y; this.width = weaponUsed.bulletWidth; this.height = weaponUsed.bulletHeight; this.speed = BULLET_SPEED; this.angle = angle; this.damage = damage; this.vx = Math.cos(angle) * this.speed; this.vy = Math.sin(angle) * this.speed; this.glowColor = weaponUsed.bulletGlowColor || null; this.glowBlur = weaponUsed.bulletGlowBlur || 0; this.image = bulletImg; } update() { this.x += this.vx; this.y += this.vy; } collidesWith(entity) { const halfWidth = this.width / 2; const halfHeight = this.height / 2; return this.x - halfWidth < entity.x + entity.width && this.x + halfWidth > entity.x && this.y - halfHeight < entity.y + entity.height && this.y + halfHeight > entity.y; } draw() { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI / 2); if (this.glowColor && this.glowBlur > 0) { ctx.shadowColor = this.glowColor; ctx.shadowBlur = this.glowBlur; } ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height); ctx.restore(); } }
 class Particle { constructor(x, y, type, colorOverride = null) { this.x = x; this.y = y; this.lifespan = PARTICLE_LIFESPAN * (Math.random() * 0.5 + 0.75); this.vx = Math.random() * 6 - 3; this.vy = Math.random() * 6 - 3; this.size = Math.random() * 3 + 1; this.type = type; this.gravity = 0; this.drag = 0.97; this.rotation = Math.random() * Math.PI * 2; this.rotationSpeed = (Math.random() - 0.5) * 0.1; let r, g, b, a; switch(type) { case 'blood': if (!isBloodEnabled) return; r = Math.floor(150 + Math.random() * 60); g = Math.floor(Math.random() * 15); b = Math.floor(Math.random() * 15); a = Math.min(1, Math.random() * 0.6 + 0.4); this.color = colorOverride || `rgba(${r}, ${g}, ${b}, ${a})`; this.gravity = 0.18; this.size = Math.random() * 4 + 1.5; this.drag = 0.98; break; case 'smoke': r = Math.floor(Math.random()*50+50); g = Math.floor(Math.random()*50+50); b = Math.floor(Math.random()*50+50); a = Math.min(1, Math.random() * 0.3 + 0.1); this.color = `rgba(${r}, ${g}, ${b}, ${a})`; this.vy -= 2; this.gravity = -0.02; this.size = Math.random() * 7 + 5; this.drag = 0.94; this.lifespan *= 1.8; this.rotationSpeed = (Math.random() - 0.5) * 0.02; break; case 'muzzleFlash': r = 255; g = Math.floor(Math.random() * 80 + 175); b = Math.floor(Math.random()*50); a = Math.min(1, Math.random() * 0.7 + 0.3); this.color = `rgba(${r}, ${g}, ${b}, ${a})`; this.lifespan *= 0.2; const flashSpeed = 4; if(player){this.vx = Math.cos(player.angle + Math.random()*0.3 - 0.15) * (Math.random()*4+flashSpeed); this.vy = Math.sin(player.angle + Math.random()*0.3 - 0.15) * (Math.random()*4+flashSpeed);} this.size = Math.random() * 6 + 4; this.drag = 0.88; break; case 'zombieDeath': if (!isBloodEnabled) return; r = Math.floor(130 + Math.random() * 80); g = Math.floor(Math.random() * 20); b = Math.floor(Math.random() * 20); a = Math.min(1, Math.random() * 0.6 + 0.45); this.color = `rgba(${r}, ${g}, ${b}, ${a})`; this.gravity = 0.35; this.size = Math.random() * 5.5 + 3.5; const burstSpeed = 7 + Math.random() * 5; const angle = Math.random() * Math.PI * 2; this.vx = Math.cos(angle) * burstSpeed * (0.6 + Math.random() * 0.8); this.vy = Math.sin(angle) * burstSpeed * (0.6 + Math.random() * 0.8) - (2.5 + Math.random() * 3.5); this.lifespan = (PARTICLE_LIFESPAN * 0.55) + (Math.random() * PARTICLE_LIFESPAN * 0.45); this.drag = 0.93; this.sizeReduction = 0.96; this.rotationSpeed = (Math.random() - 0.5) * 0.2; break; default: r = 200; g = 200; b = 200; a = Math.min(1, Math.random() * 0.5 + 0.5); this.color = `rgba(${r}, ${g}, ${b}, ${a})`; } if(!this.color) {this.lifespan = 0; return;} const rgbaMatch = this.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/); this.initialAlpha = rgbaMatch && rgbaMatch[4] !== undefined ? parseFloat(rgbaMatch[4]) : 1.0; this.maxLifespan = this.lifespan; } update() { this.lifespan--; this.vx *= this.drag; this.vy *= this.drag; this.vy += this.gravity; this.x += this.vx; this.y += this.vy; this.rotation += this.rotationSpeed; this.alpha = this.maxLifespan > 0 ? Math.max(0, (this.lifespan / this.maxLifespan) * this.initialAlpha) : 0; this.size *= (this.sizeReduction || 0.985); this.size = Math.max(0, this.size); } draw() { if (this.lifespan <= 0) return; const rgbaMatch = this.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/); if (rgbaMatch) { const r = rgbaMatch[1]; const g = rgbaMatch[2]; const b = rgbaMatch[3]; const finalAlpha = isNaN(this.alpha) ? 0 : Math.max(0, Math.min(1, this.alpha)); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalAlpha})`; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation); ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size); ctx.restore(); } else { console.warn("Could not parse particle color:", this.color); } } }
@@ -453,6 +516,17 @@ function selectBuff(buffId) {
     updateUI();
 }
 
+function getCurrentAmmoCost() {
+    return AMMO_COST_BASE + Math.floor((currentWave -1) * AMMO_COST_SCALE_PER_WAVE);
+}
+
+function getCurrentHealthCost() {
+     return HEALTH_COST_BASE + Math.floor((currentWave -1) * HEALTH_COST_SCALE_PER_WAVE);
+}
+
+function getCurrentUpgradeCost() {
+    return UPGRADE_COST_BASE + Math.floor((currentWave -1) * UPGRADE_COST_SCALE_PER_WAVE);
+}
 
 function updateUI() {
     if (scoreEl) scoreEl.textContent = score;
@@ -464,12 +538,22 @@ function updateUI() {
     if (ammoEl) ammoEl.textContent = isReloading ? 'RELOADING' : weaponStats.currentAmmo;
     if (maxAmmoEl) maxAmmoEl.textContent = weaponStats.ammoCapacity;
 
-    const ammoCost = 10;
-    const healthCost = 20;
-    const upgradeCost = 50 + currentWave * 5;
-    if(buyAmmoButton) { buyAmmoButton.textContent = `Buy Ammo (${currentWeaponName}) (${ammoCost} Score)`; buyAmmoButton.disabled = !player || score < ammoCost || weaponStats.currentAmmo === weaponStats.ammoCapacity || isReloading; }
-    if(buyHealthButton) { buyHealthButton.textContent = `Buy Health (+25 HP) (${healthCost} Score)`; buyHealthButton.disabled = !player || score < healthCost || !player || player.health >= player.maxHealth; }
-    if(upgradeWeaponButton) { upgradeWeaponButton.textContent = `Upgrade ${currentWeaponName} (${upgradeCost} Score)`; upgradeWeaponButton.disabled = !player || score < upgradeCost; }
+    const ammoCost = getCurrentAmmoCost();
+    const healthCost = getCurrentHealthCost();
+    const upgradeCost = getCurrentUpgradeCost();
+
+    if(buyAmmoButton) {
+        buyAmmoButton.textContent = `Buy Ammo (${currentWeaponName}) (${ammoCost} Score)`;
+        buyAmmoButton.disabled = !player || score < ammoCost || weaponStats.currentAmmo === weaponStats.ammoCapacity || isReloading;
+    }
+    if(buyHealthButton) {
+        buyHealthButton.textContent = `Buy Health (+25 HP) (${healthCost} Score)`;
+        buyHealthButton.disabled = !player || score < healthCost || player.health >= player.maxHealth;
+    }
+    if(upgradeWeaponButton) {
+        upgradeWeaponButton.textContent = `Upgrade ${currentWeaponName} (${upgradeCost} Score)`;
+        upgradeWeaponButton.disabled = !player || score < upgradeCost;
+    }
 
 
     if (toggleMusicButton) {
@@ -875,10 +959,46 @@ restartButton.addEventListener('click', () => {
     }
     updateHealthOverlay();
 });
-buyAmmoButton.addEventListener('click', () => { playClickSound(); const cost = 10; if (score >= cost && weaponStats.currentAmmo < weaponStats.ammoCapacity) { score -= cost; weaponStats.currentAmmo = weaponStats.ammoCapacity; isReloading = false; reloadTimer = 0; updateUI(); } });
-buyHealthButton.addEventListener('click', () => { playClickSound(); const cost = 20; const healAmount = 25; if (player && score >= cost && player.health < player.maxHealth) { score -= cost; player.health = Math.min(player.maxHealth, player.health + healAmount); updateUI(); } }); // Added player check
-upgradeWeaponButton.addEventListener('click', () => { playClickSound(); const cost = 50 + currentWave * 5; if (score >= cost) { score -= cost; weaponStats.damage = Math.round(weaponStats.damage * 1.15); weaponStats.reloadTime = Math.max(20, Math.floor(weaponStats.reloadTime * 0.9)); console.log(`Upgraded! Dmg: ${weaponStats.damage}, Rld: ${weaponStats.reloadTime}f`); updateUI(); } });
-nextWaveButton.addEventListener('click', () => { playClickSound(); startWave(currentWave + 1); });
+
+buyAmmoButton.addEventListener('click', () => {
+    playClickSound();
+    const cost = getCurrentAmmoCost();
+    if (score >= cost && weaponStats.currentAmmo < weaponStats.ammoCapacity) {
+        score -= cost;
+        weaponStats.currentAmmo = weaponStats.ammoCapacity;
+        isReloading = false;
+        reloadTimer = 0;
+        updateUI();
+    }
+});
+
+buyHealthButton.addEventListener('click', () => {
+    playClickSound();
+    const cost = getCurrentHealthCost();
+    const healAmount = 25;
+    if (player && score >= cost && player.health < player.maxHealth) {
+        score -= cost;
+        player.health = Math.min(player.maxHealth, player.health + healAmount);
+        updateUI();
+    }
+});
+
+upgradeWeaponButton.addEventListener('click', () => {
+    playClickSound();
+    const cost = getCurrentUpgradeCost();
+    if (score >= cost) {
+        score -= cost;
+        weaponStats.damage = Math.round(weaponStats.damage * 1.15); // Keep upgrade effect the same
+        weaponStats.reloadTime = Math.max(20, Math.floor(weaponStats.reloadTime * 0.9));
+        console.log(`Upgraded! Dmg: ${weaponStats.damage}, Rld: ${weaponStats.reloadTime}f`);
+        updateUI();
+    }
+});
+
+nextWaveButton.addEventListener('click', () => {
+    playClickSound();
+    startWave(currentWave + 1);
+});
 
 
 startGameButton.addEventListener('mouseover', () => { if(!startGameButton.disabled) playSelectSound(); });
